@@ -165,7 +165,7 @@ bool kpf_dyld_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
     opcode_stream[1] = 0;             // BL dyld_hook;
     opcode_stream[2] = 0xAA0003E0|rn; // MOV x20, x0
     opcode_stream[3] = 0x14000008;    // B
-    puts("KPF: Patched dyld check");
+    // puts("KPF: Patched dyld check");
     return true;
 }
 
@@ -195,7 +195,7 @@ bool kpf_amfi_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
     }
     if(!has_frame)
     {
-        puts("KPF: Found AMFI (Leaf)");
+        // puts("KPF: Found AMFI (Leaf)");
         opcode_stream[0] = 0xd2800020;
         opcode_stream[1] = RET;
     }
@@ -227,13 +227,13 @@ bool kpf_amfi_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
             DEVLOG("kpf_amfi_callback: failed to find anything");
             return false;
         }
-        puts("KPF: Found AMFI (Routine)");
+        // puts("KPF: Found AMFI (Routine)");
     }
     return true;
 }
 bool kpf_has_done_mac_mount;
 bool kpf_mac_mount_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
-    puts("KPF: Found mac_mount");
+    // puts("KPF: Found mac_mount");
     uint32_t* mac_mount = &opcode_stream[0];
     // search for tbnz w*, 5, *
     // and nop it (enable MNT_UNION mounts)
@@ -262,7 +262,7 @@ bool kpf_mac_mount_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream)
     mac_mount_1[0] = 0xaa1f03e8;
     kpf_has_done_mac_mount = true;
     xnu_pf_disable_patch(patch);
-    puts("KPF: Found mac_mount");
+    // puts("KPF: Found mac_mount");
     return true;
 }
 
@@ -277,7 +277,7 @@ bool kpf_conversion_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream
     {
         panic_at(orig, "kpf_conversion_callback: opcode check failed");
     }
-    puts("KPF: Found task_conversion_eval");
+    // puts("KPF: Found task_conversion_eval");
 
     // step 3
     // this will then backwards search for this: if (caller == victim) {
@@ -383,7 +383,7 @@ bool kpf_convert_port_to_map_callback(struct xnu_pf_patch *patch, uint32_t *opco
     {
         panic("convert_port_to_map found twice!");
     }
-    puts("KPF: Found convert_port_to_map_with_flavor");
+    // puts("KPF: Found convert_port_to_map_with_flavor");
     found_convert_port_to_map = true;
     *patchpoint = NOP;
     return true;
@@ -615,7 +615,7 @@ bool kpf_mac_dounmount_callback(struct xnu_pf_patch* patch, uint32_t* opcode_str
         panic("dounmount found twice!");
     }
 
-    puts("KPF: Found dounmount");
+    // puts("KPF: Found dounmount");
     opcode_stream[0] = NOP;
 #if !DEV_BUILD
     // Only disable in non-dev build on match so that when testing we ensure that the algorithm matches only a single place
@@ -681,7 +681,7 @@ bool kpf_find_shellcode_area_callback(struct xnu_pf_patch* patch, uint32_t* opco
         return false;
     }
     shellcode_area = opcode_stream;
-    puts("KPF: Found shellcode area, copying...");
+    // puts("KPF: Found shellcode area, copying...");
     xnu_pf_disable_patch(patch);
     return true;
 }
@@ -698,7 +698,7 @@ void kpf_find_shellcode_area(xnu_pf_patchset_t* xnu_text_exec_patchset) {
     xnu_pf_maskmatch(xnu_text_exec_patchset, "find_shellcode_area", matches, masks, count, true, (void*)kpf_find_shellcode_area_callback);
 }
 bool kpf_mac_vm_map_protect_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
-    puts("KPF: Found vm_map_protect");
+    // puts("KPF: Found vm_map_protect");
     // tbnz w8, 9, * in C code this is:
     // if (map->map_disallow_new_exec == TRUE) {
     // and then we jump out of this so that we don't have these checks (no *WX and no new --X when the process has requested it)
@@ -808,7 +808,7 @@ bool vm_fault_enter_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream
         if (((*try_loc|(i<<5))&0xFD07FFE0) == (0x34000000|i<<5)) {
             // Found it!
             *try_loc = NOP;
-            puts("KPF: Found vm_fault_enter");
+            // puts("KPF: Found vm_fault_enter");
             found_vm_fault_enter = true;
             xnu_pf_disable_patch(patch);
             return true;
@@ -834,7 +834,7 @@ bool vm_fault_enter_callback14(struct xnu_pf_patch* patch, uint32_t* opcode_stre
         return false;
     }
     opcode_stream[0] = NOP;
-    puts("KPF: Found vm_fault_enter");
+    // puts("KPF: Found vm_fault_enter");
     found_vm_fault_enter = true;
     xnu_pf_disable_patch(patch);
     return true;
@@ -1049,7 +1049,7 @@ uint32_t *vnode_gaddr;
 
 bool vnode_getattr_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
     if (vnode_gaddr) panic("vnode_getattr_callback: invoked twice");
-    puts("KPF: Found vnode_getattr");
+    // puts("KPF: Found vnode_getattr");
     vnode_gaddr = find_prev_insn(opcode_stream, 0x80, 0xd10000FF, 0xFF0000FF);
     xnu_pf_disable_patch(patch);
     return !!vnode_gaddr;
@@ -1063,7 +1063,7 @@ bool vnode_getpath_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream)
         DEVLOG("vnode_getpath_callback: already ran, skipping...");
         return false;
     }
-    puts("KPF: Found vnode_getpath");
+    // puts("KPF: Found vnode_getpath");
     repatch_ldr_x19_vnode_pathoff = opcode_stream[-2];
     xnu_pf_disable_patch(patch);
     return true;
@@ -1076,7 +1076,7 @@ bool ret0_gadget_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream)
         DEVLOG("ret0_gadget_callback: already ran, skipping...");
         return false;
     }
-    puts("KPF: Found ret0 gadget");
+    // puts("KPF: Found ret0 gadget");
     ret0_gadget = xnu_ptr_to_va(opcode_stream);
     xnu_pf_disable_patch(patch);
     return true;
@@ -1101,7 +1101,7 @@ bool vnode_lookup_callback(struct xnu_pf_patch* patch, uint32_t* opcode_stream)
         DEVLOG("Failed match of vnode_lookup code at 0x%llx", kext_rebase_va(xnu_ptr_to_va(opcode_stream)));
         return false;
     }
-    puts("KPF: Found vnode_lookup");
+    // puts("KPF: Found vnode_lookup");
     vfs_context_current = follow_call(&opcode_stream[1]);
     vnode_lookup = follow_call(&opcode_stream[6]);
     vnode_put = follow_call(&try[4]);
@@ -1163,7 +1163,7 @@ void kpf_find_shellcode_funcs(xnu_pf_patchset_t* xnu_text_exec_patchset) {
 uint64_t traps_mask[] = { 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0, 0, 0xffffffffffffffff };
 uint64_t traps_match[] = { 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0, 0x0000000000000000, 0x0000000000000000, 0x0000000000000004, 0, 0, 0x0000000000000005 };
 bool mach_traps_callback(struct xnu_pf_patch* patch, uint64_t* mach_traps) {
-    puts("KPF: Found mach traps");
+    // puts("KPF: Found mach traps");
 
     // for the task for pid routine we only need to patch the first branch that checks if the pid == 0
     // we just replace it with a nop
@@ -1178,7 +1178,7 @@ bool mach_traps_callback(struct xnu_pf_patch* patch, uint64_t* mach_traps) {
     }
 
     tfp0check[0] = NOP;
-    puts("KPF: Found tfp0");
+    // puts("KPF: Found tfp0");
 
     xnu_pf_disable_patch(patch);
 
@@ -1187,14 +1187,14 @@ bool mach_traps_callback(struct xnu_pf_patch* patch, uint64_t* mach_traps) {
 bool has_found_sbops = 0;
 uint64_t* sbops;
 bool sb_ops_callback(struct xnu_pf_patch* patch, uint64_t* sbops_stream) {
-    puts("KPF: Found sbops");
+    // puts("KPF: Found sbops");
     sbops = sbops_stream;
     has_found_sbops = true;
     xnu_pf_disable_patch(patch);
     return true;
 }
 bool kpf_apfs_patches_rename(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
-    puts("KPF: Found APFS rename");
+    // puts("KPF: Found APFS rename");
     opcode_stream[3] = NOP;
     return true;
 }
@@ -1206,7 +1206,7 @@ bool kpf_apfs_patches_mount(struct xnu_pf_patch* patch, uint32_t* opcode_stream)
         DEVLOG("kpf_apfs_patches_mount: failed to find f_apfs_privcheck");
         return false;
     }
-    puts("KPF: Found APFS mount");
+    // puts("KPF: Found APFS mount");
     *f_apfs_privcheck = 0xeb00001f; // cmp x0, x0
     return true;
 }
@@ -1274,7 +1274,7 @@ bool kpf_amfi_execve_tail(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
         DEVLOG("kpf_amfi_execve_tail: failed to find amfi_ret");
         return false;
     }
-    puts("KPF: Found AMFI execve hook");
+    // puts("KPF: Found AMFI execve hook");
     xnu_pf_disable_patch(patch);
     return true;
 }
@@ -1284,7 +1284,7 @@ bool kpf_amfi_sha1(struct xnu_pf_patch* patch, uint32_t* opcode_stream) {
         DEVLOG("kpf_amfi_sha1: failed to find cmp");
         return false;
     }
-    puts("KPF: Found AMFI hashtype check");
+    // puts("KPF: Found AMFI hashtype check");
     xnu_pf_disable_patch(patch);
     *cmp = 0x6b00001f; // cmp w0, w0
     return true;
@@ -1322,7 +1322,7 @@ bool kpf_amfi_mac_syscall(struct xnu_pf_patch *patch, uint32_t *opcode_stream) {
         if((rep[0] == 0x321c03e2 /* orr w2, wzr, 0x10 */ || rep[0] == 0x52800202 /* movz w2, 0x10 */))
         {
             foundit = true;
-            puts("KPF: Found AMFI mac_syscall");
+            // puts("KPF: Found AMFI mac_syscall");
             break;
         }
         rep++;
@@ -1832,10 +1832,10 @@ void command_kpf() {
     if (!snapshotString) panic("no snapshot string");
 
     *snapshotString = 'x';
-    puts("KPF: Disabled snapshot temporarily");
+    // puts("KPF: Disabled snapshot temporarily");
 
     if (!is_oldstyle_rd && ramdisk_buf) {
-        puts("KPF: Found ramdisk, appending kernelinfo");
+        // puts("KPF: Found ramdisk, appending kernelinfo");
 
         ramdisk_buf = realloc(ramdisk_buf, ramdisk_size + 0x10000);
 
@@ -1916,27 +1916,27 @@ void kpf_autoboot() {
 }
 
 void module_entry() {
-    puts("");
-    puts("");
-    puts("#==================");
-    puts("#");
-    puts("# checkra1n kpf " CHECKRAIN_VERSION);
-    puts("#");
-    puts("# Proudly written in nano");
-    puts("# (c) 2019-2021 Kim Jong Cracks");
-    puts("#");
-    puts("# This software is not for sale");
-    puts("# If you purchased this, please");
-    puts("# report the seller.");
-    puts("#");
-    puts("# Get it for free at https://checkra.in");
-    puts("#");
-    puts("#====  Made by  ===");
-    puts("# argp, axi0mx, danyl931, jaywalker, kirb, littlelailo, nitoTV");
-    puts("# never_released, nullpixel, pimskeks, qwertyoruiop, sbingner, siguza");
-    puts("#==== Thanks to ===");
-    puts("# haifisch, jndok, jonseals, xerub, lilstevie, psychotea, sferrini");
-    puts("# Cellebrite (ih8sn0w, cjori, ronyrus et al.)");
+    // puts("");
+    // puts("");
+    // puts("#==================");
+    // puts("#");
+    // puts("# checkra1n kpf " CHECKRAIN_VERSION);
+    // puts("#");
+    // puts("# Proudly written in nano");
+    // puts("# (c) 2019-2021 Kim Jong Cracks");
+    // puts("#");
+    // puts("# This software is not for sale");
+    // puts("# If you purchased this, please");
+    // puts("# report the seller.");
+    // puts("#");
+    // puts("# Get it for free at https://checkra.in");
+    // puts("#");
+    // puts("#====  Made by  ===");
+    // puts("# argp, axi0mx, danyl931, jaywalker, kirb, littlelailo, nitoTV");
+    // puts("# never_released, nullpixel, pimskeks, qwertyoruiop, sbingner, siguza");
+    // puts("#==== Thanks to ===");
+    // puts("# haifisch, jndok, jonseals, xerub, lilstevie, psychotea, sferrini");
+    // puts("# Cellebrite (ih8sn0w, cjori, ronyrus et al.)");
     puts("#==================");
 
     preboot_hook = command_kpf;

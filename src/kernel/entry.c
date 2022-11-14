@@ -255,6 +255,8 @@ __attribute__((noinline)) void pongo_entry_cached()
         case BOOT_FLAG_DEFAULT: // 0
             // Boot XNU
             xnu_loadrd();
+            // sep_boot_hook = 0; //tested
+            fiprintf(stderr, "SEPBOOTFLAG:%lx\n", (unsigned long)sep_boot_hook);
             if (sep_boot_hook)
                 sep_boot_hook();
             boot_msg = "Booting";
