@@ -3,7 +3,7 @@
 - In host terminal, `checkrainb -c - v -k PongoConsolidated.bin -p`
 - In pongo shell, $ `sep pwn`
 - load XNUSPY, `loader/loader module/xnuspy`
-- Enjoy
+- Enjoy :)
 
 A pre-boot execution environment for Apple boards built on top of checkra1n.
 
