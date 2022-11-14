@@ -84,17 +84,17 @@ void pongo_main_task() {
     // Set up Secure Enclave
     sep_setup();
 
-    puts("");
-    puts("#==================");
-    puts("#");
-    puts("# pongoOS " PONGO_VERSION);
-    puts("#");
-    puts("# https://checkra.in");
-    puts("#");
-    puts("#==================");
+    // puts("");
+    // puts("#==================");
+    // puts("#");
+    // puts("# pongoOS " PONGO_VERSION);
+    // puts("#");
+    // puts("# https://checkra.in");
+    // puts("#");
+    // puts("#==================");
     screen_mark_banner();
 
-    iprintf("Booted by: %s\n", (const char*)dt_get_prop("chosen", "firmware-version", NULL));
+    // iprintf("Booted by: %s\n", (const char*)dt_get_prop("chosen", "firmware-version", NULL));
     strcpy(dt_get_prop("chosen", "firmware-version", NULL), "pongoOS-");
     strcat(dt_get_prop("chosen", "firmware-version", NULL), PONGO_VERSION);
 #ifdef __clang__

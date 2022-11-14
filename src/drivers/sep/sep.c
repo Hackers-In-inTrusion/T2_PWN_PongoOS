@@ -643,6 +643,20 @@ no_kbag:
 
 
 void seprom_fwload_race() {
+    for(int i =0; i<10; i++){
+            fiprintf(stderr, "[FWLOAD]\n");
+    }
+
+    if (!tz_blackbird()) {
+        fiprintf(stderr, "*tzbb failed\n");
+    }
+    else{    
+        tz_lockdown();
+        fiprintf(stderr, "*tzbb success lckdwn\n");
+    }
+    return;
+
+
     uint32_t volatile* shmshc = (uint32_t*)0x210E00000;
 
     if (shmshc[0] == 0xea000002) {
@@ -1074,6 +1088,9 @@ void sep_aes_decrypt(const char* cmd, char* args) {
 
 void sep_auto(const char* cmd, char* args)
 {
+    for(int i=0; i<10; i++){
+        fiprintf(stderr, "%x", socnum);
+    }
     // This function determines what should run automatically, and we want to stick with the minimum.
 
     // If TZ0 is locked, then one of the following happened:
@@ -1176,6 +1193,7 @@ void sep_setup() {
 
     uint32_t len = 0;
     uint32_t *xnu_wants_booted = dt_prop(gSEPDev, "sepfw-booted", &len);
+    fiprintf(stderr,"XNUWANTSB: %p LEN: %d\n",xnu_wants_booted, len);
     gXNUExpectsBooted = xnu_wants_booted && len == 4 && *xnu_wants_booted != 0;
 
     dt_node_t *map = dt_find(gDeviceTree, "/device-tree/chosen/memory-map");
